@@ -1,0 +1,323 @@
+<html>
+    <head>
+        <title>JavaScritp</title>
+
+        <style>
+
+
+            .hide
+            {
+            display: none;
+            }
+
+
+            .car ,
+            .enemy
+            {
+                position: absolute;
+
+                bottom: 100px;
+                left: 100px;
+
+                width: 49px;
+                height: 130px;
+
+                background-image: url(car.png);
+                background-size: cover;
+            }
+
+
+            .line
+            {
+                position: absolute;
+                height: 100px;
+                width: 10px;
+                margin-left:  150px;
+                background-color: rgb(233, 217, 0);
+            }
+
+
+            .score
+            {
+                background-color: black;
+                height: 70px;
+                text-align: center;
+                color:white;
+                font-size: 1.5em;
+                font-family: fantasy;
+            }
+
+
+
+            .gameArea
+            {
+                background-color: rgb(71, 71, 71);
+                width: 300px;
+                height: 100%;
+                overflow: hidden;
+                position: relative;
+                margin: auto;
+            }
+
+
+            .startScreen
+            {
+                text-align: center;
+                border: 1px solid red;
+                padding: 15px;
+                margin: auto;
+                width: 300px;
+            }
+
+
+        </style>
+    </head>
+
+    <body>
+        <div class="score"></div>
+        <div class="game">
+            <div class="startScreen"> Click to Start! </div>
+            <div class="gameArea"></div>
+        </div>
+        <script>
+
+
+            const score = document.querySelector(".score");
+            const startScreen = document.querySelector(".startScreen");
+            const gameArea = document.querySelector(".gameArea");
+
+            let player = 
+            {
+                speed:10,
+                score:0
+            };
+
+            let keys = 
+            {
+                ArrowUp: false,
+                ArrowDown: false,
+                ArrowLeft: false,
+                ArrowRight: false,
+            };
+
+
+            startScreen.addEventListener("click",start);
+            document.addEventListener("keydown", pressOn); //listen if any key is pressed
+            document.addEventListener("keyup",pressOff); //listen if any key is released
+
+
+
+            function moveLines()
+            {
+                let lines = document.querySelectorAll(".line");
+                lines.forEach(function(item)
+                {
+                    if(item.y >= 1500)
+                    {
+                        item.y -= 1500;
+                    }
+                    item.y += player.speed;
+                    item.style.top = item.y + "px";
+                })
+
+            }
+
+
+            function moveEnemy(car)
+            {
+                let elem = document.querySelectorAll(".enemy");
+                elem.forEach(function(item)
+                {
+                    if(isCollide(car,item))
+                    {
+                        endGame();
+                    }
+
+                    if(item.y >= 1500)
+                    {
+                        item.y = -600;
+                        item.style.left = Math.floor(Math.random()*250) + "px";
+                        // item.style.backgroundColor = randomColor();
+                    }
+                    item.y += player.speed*0.8;
+                    item.style.top = item.y + "px";
+                })
+
+            }
+
+
+            function isCollide(a,b)
+            {
+                let aRect = a.getBoundingClientRect();
+                let bRect = b.getBoundingClientRect();
+
+                return !(
+                    (aRect.bottom < bRect.top)||
+                    (aRect.top > bRect.bottom)||
+                    (aRect.right < bRect.left)||
+                    (aRect.left > bRect.right)
+                )
+            }
+
+
+
+
+
+
+
+
+            function playGame()
+            {
+                let car = document.querySelector(".car");
+
+                moveLines();
+                moveEnemy(car);
+
+                let road =gameArea.getBoundingClientRect();
+
+
+                if(player.start)
+                {
+                    if(keys.ArrowUp && player.y >road.top)
+                    {
+                        player.y -= player.speed; // change the value
+                    }
+
+                    if(keys.ArrowDown && player.y < (road.bottom-100))
+                    {
+                        player.y += player.speed;
+                    }
+
+                    if(keys.ArrowLeft && player.x > 0)
+                    {
+                        player.x -= player.speed;
+                    }
+
+                    if(keys.ArrowRight && player.x < (road.width-55))
+                    {
+                        player.x += player.speed;
+                    }
+
+
+                    // use .style to set attributes
+                    car.style.left = player.x + "px"; 
+                    car.style.top = player.y + "px"; 
+
+                    window.requestAnimationFrame(playGame);
+                    player.score ++;
+                    score.innerText = "Score: " + player.score;
+                }
+
+            }
+
+
+            function pressOn(e)
+            {
+                e.preventDefault();
+                keys[e.key] = true;
+                console.log(keys);
+            }
+
+            function pressOff(e)
+            {
+                e.preventDefault();
+                keys[e.key] = false;
+                console.log(keys);
+            }
+
+            function endGame()
+            {
+                player.start = false;
+                score.innerHTML = "Game Over <br> Score was: " + player.score;
+                startScreen.classList.remove("hide")
+            }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            function start()
+            {
+                startScreen.classList.add("hide");
+                // gameArea.classList.remove("hide");
+                
+                
+                // Restart the stats and screen
+                gameArea.innerHTML = "";
+                player.start = true
+                player.score = 0;
+
+
+
+                // LINES
+
+                for(let x=0;x<10;x++)
+                {
+                    let div = document.createElement("div");
+                    div.classList.add("line");
+                    div.y = x*150;
+                    div.style.top = (x*150) + "px";
+                    gameArea.appendChild(div);
+                }
+
+                window.requestAnimationFrame(playGame);
+
+                let car = document.createElement("div"); // Create a div
+                // car.innerHTML = "Car"; //the div says "car"
+                car.setAttribute("class","car"); // sets value on the element selected
+                gameArea.appendChild(car); //i put car div inside gameArea Div
+                
+
+                // i set up the initial position of the div CAR
+                // .offset = read-only property returns the distance
+                player.x = car.offsetLeft; 
+                player.y = car.offsetTop;
+
+
+
+
+                 // ENEMIES CAR
+ 
+                for(let x=0;x<8;x++)
+                {
+                    let enemy = document.createElement("div");
+                    enemy.classList.add("enemy");
+
+                    enemy.y = ((x+1)*600)*-1;
+                    enemy.style.top = enemy.y + "px";
+                    enemy.style.left = Math.floor(Math.random()*250) + "px";
+                    // enemy.style.backgroundColor = randomColor();
+
+
+                    gameArea.appendChild(enemy);
+                }
+
+            }
+
+            // function randomColor()
+            // {
+            //     function c()
+            //     {
+            //         let hex = Math.floor(Math.random()*256).toString(16);
+            //         return ("0"+String(hex)).substr(-2)
+            //     }
+            //     return "#"+c()+c()+c()
+            // }
+
+
+
+
+
+
+        </script>
+    </body>
+</html>
